@@ -1,1 +1,17 @@
+# Local environment / secrets
 .env
+.env.*
+!.env.example
+
+# Generated secret material
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# OS/editor noise
+.DS_Store
+*.swp
