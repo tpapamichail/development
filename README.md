@@ -28,20 +28,27 @@ Docker Compose stack με:
 
 ## Ρύθμιση
 
-Δημιουργήστε το τοπικό αρχείο περιβάλλοντος:
+Δημιουργήστε το `.env` με τον interactive generator:
+
+```bash
+./generate-env.sh
+```
+
+Το script:
+
+- ζητά το OpenRouter API key χωρίς να το εμφανίζει στο terminal,
+- ζητά versions και OpenRouter models, προσφέροντας τις τρέχουσες προτεινόμενες τιμές,
+- δημιουργεί αυτόματα ισχυρά PostgreSQL passwords και application tokens,
+- γράφει ατομικά το `.env` με permissions `600`,
+- δεν αντικαθιστά υπάρχον `.env` χωρίς ρητή επιβεβαίωση.
+
+Για χειροκίνητη ρύθμιση:
 
 ```bash
 cp .env.example .env
 ```
 
-Αντικαταστήστε όλες τις τιμές `replace-me`. Για ασφαλή τυχαία secrets:
-
-```bash
-openssl rand -hex 32
-printf 'sk-%s\n' "$(openssl rand -hex 32)"
-```
-
-Τα `LITELLM_MASTER_KEY` και `LITELLM_SALT_KEY` πρέπει να αρχίζουν με `sk-`. Το `LITELLM_SALT_KEY` πρέπει να παραμένει σταθερό μετά την πρώτη χρήση, επειδή χρησιμοποιείται για την προστασία αποθηκευμένων credentials.
+Στη χειροκίνητη ρύθμιση, αντικαταστήστε όλες τις τιμές `replace-me`. Τα `LITELLM_MASTER_KEY` και `LITELLM_SALT_KEY` πρέπει να αρχίζουν με `sk-`. Το `LITELLM_SALT_KEY` πρέπει να παραμένει σταθερό μετά την πρώτη χρήση, επειδή χρησιμοποιείται για την προστασία αποθηκευμένων credentials.
 
 Το `.env` αγνοείται από το Git. Μην το προσθέσετε στο repository.
 
