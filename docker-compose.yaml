@@ -1,0 +1,131 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    container_name: hindsight-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/18/docker
+
+    networks:
+      - hindsight-internal
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+  hindsight:
+    image: ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}
+    container_name: hindsight
+    restart: unless-stopped
+
+    shm_size: "1gb"
+
+    environment:
+      # -------------------------
+      # Database
+      # -------------------------
+      HINDSIGHT_API_DATABASE_URL: >-
+        postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+
+      HINDSIGHT_API_VECTOR_EXTENSION: pgvector
+
+      # -------------------------
+      # LLM
+      HINDSIGHT_API_LLM_PROVIDER: openrouter
+      HINDSIGHT_API_LLM_API_KEY: ${OPENROUTER_API_KEY}
+      HINDSIGHT_API_LLM_MODEL: ${OPENROUTER_MODEL:-qwen/qwen3.5-9b}
+
+      # Embeddings via OpenRouter
+      HINDSIGHT_API_EMBEDDINGS_PROVIDER: openrouter
+      HINDSIGHT_API_EMBEDDINGS_OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      HINDSIGHT_API_EMBEDDINGS_OPENROUTER_MODEL: ${OPENROUTER_EMBEDDING_MODEL:-perplexity/pplx-embed-v1-0.6b}
+
+      # Reranking via OpenRouter
+      HINDSIGHT_API_RERANKER_PROVIDER: openrouter
+      HINDSIGHT_API_RERANKER_OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      HINDSIGHT_API_RERANKER_OPENROUTER_MODEL: ${OPENROUTER_RERANKER_MODEL:-cohere/rerank-v3.5}
+
+      # -------------------------
+      # API Authentication
+      # Authorization:
+      # Bearer <HINDSIGHT_API_KEY>
+      # -------------------------
+      HINDSIGHT_API_TENANT_EXTENSION: hindsight_api.extensions.builtin.tenant:ApiKeyTenantExtension
+      HINDSIGHT_API_TENANT_API_KEY: ${HINDSIGHT_API_KEY}
+
+      # -------------------------
+      # MCP Authentication
+      # -------------------------
+      HINDSIGHT_API_MCP_AUTH_TOKEN: ${HINDSIGHT_MCP_TOKEN}
+
+      # -------------------------
+      # Control Plane login
+      # -------------------------
+      HINDSIGHT_CP_ACCESS_KEY: ${HINDSIGHT_UI_ACCESS_KEY}
+
+      # Control Plane talks to the API internally
+      HINDSIGHT_CP_DATAPLANE_API_URL: http://hindsight:8888
+      HINDSIGHT_CP_DATAPLANE_API_KEY: ${HINDSIGHT_API_KEY}
+
+      # Important in production
+      HINDSIGHT_API_WORKER_ID: vps-hindsight-01
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    expose:
+      - "8888"
+      - "9999"
+
+    networks:
+      - hindsight-internal
+      - proxy
+
+
+  caddy:
+    image: caddy:2
+    container_name: hindsight-caddy
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+    depends_on:
+      - hindsight
+
+    networks:
+      - proxy
+
+
+networks:
+  hindsight-internal:
+    internal: true
+
+  proxy:
+
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
