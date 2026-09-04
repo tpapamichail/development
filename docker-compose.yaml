@@ -26,6 +26,56 @@ services:
       retries: 10
 
 
+  litellm-db-init:
+    image: pgvector/pgvector:pg18
+    restart: "no"
+
+    entrypoint: ["/bin/sh", "/usr/local/bin/init-litellm-db.sh"]
+
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      LITELLM_DB_USER: ${LITELLM_DB_USER}
+      LITELLM_DB_PASSWORD: ${LITELLM_DB_PASSWORD}
+      LITELLM_DB_NAME: ${LITELLM_DB_NAME}
+
+    volumes:
+      - ./init-litellm-db.sh:/usr/local/bin/init-litellm-db.sh:ro
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - hindsight-internal
+
+
+  litellm:
+    image: docker.litellm.ai/berriai/litellm-database:${LITELLM_VERSION:-latest}
+    container_name: litellm
+    restart: unless-stopped
+
+    ports:
+      - "${LITELLM_PORT:-4001}:4000"
+
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY}
+      DATABASE_URL: >-
+        postgresql://${LITELLM_DB_USER}:${LITELLM_DB_PASSWORD}@postgres:5432/${LITELLM_DB_NAME}
+      STORE_MODEL_IN_DB: "True"
+
+    depends_on:
+      litellm-db-init:
+        condition: service_completed_successfully
+
+    networks:
+      - hindsight-internal
+      - proxy
+
+
   hindsight:
     image: ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}
     container_name: hindsight
