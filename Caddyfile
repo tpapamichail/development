@@ -1,27 +1,41 @@
 hindsight.custom.gr {
-    encode zstd gzip
+	encode zstd gzip
 
-    reverse_proxy hindsight:9999
+	reverse_proxy hindsight:9999
 
-    header {
-        X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        Strict-Transport-Security "max-age=31536000; includeSubDomains"
-        -Server
-    }
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
 }
 
 api.hindsight.custom.gr {
-    encode zstd gzip
+	encode zstd gzip
 
-    reverse_proxy hindsight:8888
+	reverse_proxy hindsight:8888
 
-    header {
-        X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        Strict-Transport-Security "max-age=31536000; includeSubDomains"
-        -Server
-    }
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}
+
+litellm.custom.gr {
+	encode zstd gzip
+
+	reverse_proxy litellm:4000
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
 }

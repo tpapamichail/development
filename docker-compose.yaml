@@ -57,8 +57,8 @@ services:
     container_name: litellm
     restart: unless-stopped
 
-    ports:
-      - "${LITELLM_PORT:-4001}:4000"
+    expose:
+      - "4000"
 
     environment:
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
